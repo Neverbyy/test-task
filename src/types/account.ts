@@ -7,7 +7,7 @@ export type AccountType = typeof AccountType[keyof typeof AccountType];
 
 export interface Account {
   id: string;
-  tags: string;
+  tags: Array<{ text: string }>;
   type: AccountType;
   login: string;
   password: string | null;

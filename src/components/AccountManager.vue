@@ -1,44 +1,25 @@
 <script setup lang="ts">
-import { ref } from 'vue';
 import { ElButton, ElCard } from 'element-plus';
 import 'element-plus/dist/index.css';
 import { Plus } from '@element-plus/icons-vue';
-import { AccountType, type Account } from '../types/account';
+import { AccountType } from '../types/account';
 import AccountList from './AccountList.vue';
+import { useAccountStore } from '../stores/accountStore';
 
-const accounts = ref<Account[]>([
-
-]);
-
-const generateId = (): string => {
-  return Date.now().toString(36) + Math.random().toString(36).substr(2);
-};
+const accountStore = useAccountStore();
 
 const handleAddAccount = (): void => {
-  const newAccount: Account = {
-    id: generateId(),
-    tags: '',
+  const newAccount = {
+    tags: [],
     type: AccountType.LOCAL,
     login: '',
     password: ''
   };
   
-  accounts.value.push(newAccount);
+  accountStore.addAccount(newAccount);
 };
 
-const handleDeleteAccount = (id: string): void => {
-  const index = accounts.value.findIndex(acc => acc.id === id);
-  if (index !== -1) {
-    accounts.value.splice(index, 1);
-  }
-};
 
-const handleUpdateAccount = (updatedAccount: Account): void => {
-  const index = accounts.value.findIndex(acc => acc.id === updatedAccount.id);
-  if (index !== -1) {
-    accounts.value[index] = updatedAccount;
-  }
-};
 
 </script>
 
@@ -71,13 +52,9 @@ const handleUpdateAccount = (updatedAccount: Account): void => {
 
     <el-card class="list-card" shadow="hover">
       <template #header>
-        <span class="list-header">Список учетных записей ({{ accounts.length }})</span>
+        <span class="list-header">Список учетных записей ({{ accountStore.getAccounts.length }})</span>
       </template>
-      <AccountList
-        :accounts="accounts"
-        @delete="handleDeleteAccount"
-        @update="handleUpdateAccount"
-      />
+      <AccountList />
     </el-card>
     
   </div>

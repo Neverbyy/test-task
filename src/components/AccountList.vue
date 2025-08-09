@@ -1,27 +1,27 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { ElTable, ElTableColumn, ElInput, ElSelect, ElOption, ElButton, ElMessageBox, ElMessage } from 'element-plus';
 import { Delete, View, Hide } from '@element-plus/icons-vue';
 import { AccountType, type Account } from '../types/account';
+import { useAccountStore } from '../stores/accountStore';
 
-interface Props {
-  accounts: Account[];
-}
 
-interface Emits {
-  (e: 'delete', id: string): void;
-  (e: 'update', account: Account): void;
-}
 
-const props = defineProps<Props>();
-const emit = defineEmits<Emits>();
-
+const accountStore = useAccountStore();
 const showPasswordMap = ref<Record<string, boolean>>({});
 const validationErrors = ref<Record<string, { login?: boolean; password?: boolean }>>({});
+const tagInputs = ref<Record<string, string>>({});
+
+
 
 const hasLocalAccounts = computed(() => {
-  return props.accounts.some(account => account.type === AccountType.LOCAL);
+  return accountStore.hasLocalAccounts;
 });
+
+// Функция для преобразования массива меток в строку для отображения
+const getTagsDisplayValue = (tags: Array<{ text: string }>): string => {
+  return tags.map(tag => tag.text).join('; ');
+};
 
 const validateAccount = (account: Account): boolean => {
   const errors: { login?: boolean; password?: boolean } = {};
@@ -63,7 +63,7 @@ const handleDelete = async (account: Account): Promise<void> => {
       }
     );
     
-    emit('delete', account.id);
+    accountStore.deleteAccount(account.id);
     ElMessage.success('Запись удалена');
   } catch (error) {
     // Пользователь отменил удаление
@@ -84,14 +84,158 @@ const handleFieldUpdate = (account: Account, field: keyof Account, value: any): 
     updatedAccount.password = null;
   }
   
-  emit('update', updatedAccount);
+  // Обновляем локальное состояние без сохранения в store
+  const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
+  if (index !== -1) {
+    accountStore.accounts[index] = updatedAccount;
+  }
 };
 
-const handleTagsUpdate = (account: Account, value: string): void => {
-  // Ограничение на 50 символов
-  const limitedValue = value.length > 50 ? value.slice(0, 50) : value;
-  handleFieldUpdate(account, 'tags', limitedValue);
+
+
+const handleTagsBlur = (account: Account): void => {
+  // Проверяем, есть ли изменения в метках
+  const currentInputValue = tagInputs.value[account.id]?.trim();
+  
+  // Разбиваем введенный текст по ; и создаем новый массив меток
+  // Даже если поле пустое, создаем пустой массив
+  const newTags = currentInputValue && currentInputValue.length > 0
+    ? currentInputValue
+        .split(';')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0)
+        .map(tag => ({ text: tag }))
+    : [];
+  
+  // Проверяем, изменились ли метки
+  const hasChanges = JSON.stringify(account.tags) !== JSON.stringify(newTags);
+  
+  if (hasChanges) {
+    // Заменяем весь массив меток новым
+    const updatedAccount = { ...account };
+    updatedAccount.tags = newTags;
+    
+    // Обновляем локальное состояние
+    const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
+    if (index !== -1) {
+      accountStore.accounts[index] = updatedAccount;
+    }
+    
+    // Сохраняем в store
+    accountStore.updateAccount(updatedAccount);
+    ElMessage.success('Метки сохранены');
+  }
 };
+
+const addTag = (account: Account): void => {
+  const newTagText = tagInputs.value[account.id]?.trim();
+  if (newTagText && newTagText.length > 0) {
+    const updatedAccount = { ...account };
+    updatedAccount.tags.push({ text: newTagText });
+    
+    // Обновляем локальное состояние
+    const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
+    if (index !== -1) {
+      accountStore.accounts[index] = updatedAccount;
+    }
+    
+    // НЕ очищаем поле ввода - метки остаются для редактирования
+    // tagInputs.value[account.id] = '';
+    
+    // Сохраняем в store
+    accountStore.updateAccount(updatedAccount);
+    ElMessage.success('Метка добавлена');
+  }
+};
+
+const removeTag = (account: Account, tagIndex: number): void => {
+  const updatedAccount = { ...account };
+  updatedAccount.tags.splice(tagIndex, 1);
+  
+  // Обновляем локальное состояние
+  const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
+  if (index !== -1) {
+    accountStore.accounts[index] = updatedAccount;
+  }
+  
+  // Сохраняем в store
+  accountStore.updateAccount(updatedAccount);
+  ElMessage.success('Метка удалена');
+};
+
+const handleTagInput = (account: Account): void => {
+  const inputValue = tagInputs.value[account.id]?.trim();
+  
+  // Разбиваем введенный текст по ; и создаем новый массив меток
+  // Даже если поле пустое, создаем пустой массив
+  const newTags = inputValue && inputValue.length > 0
+    ? inputValue
+        .split(';')
+        .map(tag => tag.trim())
+        .filter(tag => tag.length > 0)
+        .map(tag => ({ text: tag }))
+    : [];
+  
+  // Проверяем, изменились ли метки
+  const hasChanges = JSON.stringify(account.tags) !== JSON.stringify(newTags);
+  
+  if (hasChanges) {
+    // Заменяем весь массив меток новым
+    const updatedAccount = { ...account };
+    updatedAccount.tags = newTags;
+    
+    // Обновляем локальное состояние
+    const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
+    if (index !== -1) {
+      accountStore.accounts[index] = updatedAccount;
+    }
+    
+    // Сохраняем в store
+    accountStore.updateAccount(updatedAccount);
+    ElMessage.success('Метки сохранены');
+  }
+  
+  // Добавляем ; в конец для удобства ввода следующей метки (если нужно)
+  // Но только если поле не пустое
+  if (inputValue && inputValue.length > 0 && !inputValue.endsWith(';')) {
+    tagInputs.value[account.id] = inputValue + ';';
+  }
+};
+
+const handleTagInputChange = (account: Account, value: string): void => {
+  // Фильтруем ввод - оставляем только буквы, цифры и ;
+  const filteredValue = value.replace(/[^a-zA-Zа-яА-Я0-9;]/g, '');
+  
+  // Обновляем значение в поле ввода, если оно изменилось
+  if (filteredValue !== value) {
+    tagInputs.value[account.id] = filteredValue;
+  }
+  
+  // Очищаем ошибку валидации при вводе (если есть)
+  // Теперь валидация меток не нужна, так как ввод автоматически фильтруется
+};
+
+// Инициализируем поля ввода меток при загрузке компонента
+onMounted(() => {
+  accountStore.accounts.forEach(account => {
+    // Инициализируем поле ввода для всех записей, даже с пустыми метками
+    tagInputs.value[account.id] = account.tags.length > 0 
+      ? getTagsDisplayValue(account.tags) 
+      : '';
+  });
+});
+
+// Отслеживаем новые записи и инициализируем для них поля ввода
+watch(() => accountStore.accounts, (newAccounts) => {
+  newAccounts.forEach(account => {
+    if (!(account.id in tagInputs.value)) {
+      // Новая запись - инициализируем поле ввода
+      tagInputs.value[account.id] = account.tags.length > 0 
+        ? getTagsDisplayValue(account.tags) 
+        : '';
+    }
+  });
+}, { deep: true });
 
 
 
@@ -107,7 +251,14 @@ const handleLoginBlur = (account: Account): void => {
   const isValid = validateAccount(account);
   if (isValid) {
     clearValidationErrors(account.id);
-    ElMessage.success('Запись сохранена');
+    
+    // Проверяем, изменился ли логин
+    const originalAccount = accountStore.accounts.find(acc => acc.id === account.id);
+    if (originalAccount && originalAccount.login !== account.login) {
+      // Сохраняем в store только при успешной валидации и изменении
+      accountStore.updateAccount(account);
+      ElMessage.success('Запись сохранена');
+    }
   }
 };
 
@@ -115,7 +266,14 @@ const handlePasswordBlur = (account: Account): void => {
   const isValid = validateAccount(account);
   if (isValid) {
     clearValidationErrors(account.id);
-    ElMessage.success('Запись сохранена');
+    
+    // Проверяем, изменился ли пароль
+    const originalAccount = accountStore.accounts.find(acc => acc.id === account.id);
+    if (originalAccount && originalAccount.password !== account.password) {
+      // Сохраняем в store только при успешной валидации и изменении
+      accountStore.updateAccount(account);
+      ElMessage.success('Запись сохранена');
+    }
   }
 };
 
@@ -126,7 +284,14 @@ const handleTypeChange = (account: Account, value: AccountType): void => {
   const isValid = validateAccount(account);
   if (isValid) {
     clearValidationErrors(account.id);
-    ElMessage.success('Запись сохранена');
+    
+    // Проверяем, изменился ли тип
+    const originalAccount = accountStore.accounts.find(acc => acc.id === account.id);
+    if (originalAccount && originalAccount.type !== account.type) {
+      // Сохраняем в store только при успешной валидации и изменении
+      accountStore.updateAccount(account);
+      ElMessage.success('Запись сохранена');
+    }
   }
 };
 
@@ -148,23 +313,24 @@ const handleSpanMethod = ({ row, column, rowIndex, columnIndex }: any) => {
 <template>
   <div class="account-list">
     <el-table
-      :data="props.accounts"
+      :data="accountStore.getAccounts"
       style="width: 100%"
       empty-text="Нет учетных записей"
       table-layout="auto"
       :span-method="handleSpanMethod"
     >
-      <el-table-column label="Метки" min-width="150">
+      <el-table-column label="Метки" min-width="200">
         <template #default="{ row }">
-          <el-input
-            :model-value="row.tags"
-            @input="(value: string) => handleTagsUpdate(row, value)"
-            @blur="() => handleLoginBlur(row)"
-            size="small"
-            maxlength="50"
-            show-word-limit
-            placeholder="Введите метки"
-          />
+          <div class="tags-input-container">
+                        <el-input
+              v-model="tagInputs[row.id]"
+              size="small"
+              placeholder="Введите метки через ; (только буквы и цифры)"
+              @keyup.enter="handleTagInput(row)"
+              @blur="() => handleTagInput(row)"
+              @input="(value: string) => handleTagInputChange(row, value)"
+            />
+          </div>
         </template>
       </el-table-column>
 
@@ -190,7 +356,7 @@ const handleSpanMethod = ({ row, column, rowIndex, columnIndex }: any) => {
               @input="(value: string) => handleLoginUpdate(row, value)"
               @blur="() => handleLoginBlur(row)"
               size="small"
-              placeholder="Значение"
+              placeholder="Введите логин"
               :class="{ 'error-field': hasFieldError(row.id, 'login') }"
             />
           </div>
@@ -332,6 +498,15 @@ const handleSpanMethod = ({ row, column, rowIndex, columnIndex }: any) => {
   border-radius: 4px;
   border: 1px solid var(--el-border-color-lighter);
 }
+
+.tags-input-container {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+
 
 
 
