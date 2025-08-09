@@ -58,7 +58,16 @@ const handleUpdateAccount = (updatedAccount: Account): void => {
       </div>
     </el-card>
 
-
+    <el-alert
+      class="help-alert"
+      type="primary"
+      :closable="false"
+      show-icon
+    >
+      <template #title>
+        Для указания нескольких меток для одной пары логин/пароль используйте разделитель ;
+      </template>
+    </el-alert>
 
     <el-card class="list-card" shadow="hover">
       <template #header>
@@ -70,6 +79,7 @@ const handleUpdateAccount = (updatedAccount: Account): void => {
         @update="handleUpdateAccount"
       />
     </el-card>
+    
   </div>
 </template>
 

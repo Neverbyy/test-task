@@ -77,17 +77,6 @@ const handlePasswordUpdate = (account: Account, value: string): void => {
 
 <template>
   <div class="account-list">
-    <el-alert
-      class="help-alert"
-      type="info"
-      :closable="false"
-      show-icon
-    >
-      <template #title>
-        Для указания нескольких меток для одной пары логин/пароль используйте разделитель ;
-      </template>
-    </el-alert>
-
     <el-table
       :data="props.accounts"
       style="width: 100%"
