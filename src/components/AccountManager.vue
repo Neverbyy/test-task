@@ -51,8 +51,9 @@ const handleUpdateAccount = (updatedAccount: Account): void => {
           type="primary"
           :icon="Plus"
           size="default"
-          @click="handleAddAccount">
-          Добавить
+          @click="handleAddAccount"
+          circle
+          title="Добавить учетную запись">
         </el-button>
       </div>
     </el-card>

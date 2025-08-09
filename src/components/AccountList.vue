@@ -26,7 +26,7 @@ const handleDelete = async (account: Account): Promise<void> => {
       `Вы уверены что хотите удалить запись "${account.login}"?`,
       'Подтверждение удаления',
       {
-        confirmButtonText: 'Да, удалить',
+        confirmButtonText: 'Удалить',
         cancelButtonText: 'Отмена',
         type: 'warning',
       }
@@ -134,50 +134,50 @@ const handlePasswordUpdate = (account: Account, value: string): void => {
         </template>
       </el-table-column>
 
-      <el-table-column label="Пароль" min-width="150">
+      <el-table-column label="Пароль" min-width="180">
         <template #default="{ row }">
-          <div class="password-field">
-            <el-input
-              v-if="row.type === AccountType.LOCAL"
-              :model-value="row.password || ''"
-              @input="(value: string) => handlePasswordUpdate(row, value)"
-              :type="showPasswordMap[row.id] ? 'text' : 'password'"
+          <div class="password-field-with-actions">
+            <div class="password-input-wrapper">
+              <el-input
+                v-if="row.type === AccountType.LOCAL"
+                :model-value="row.password || ''"
+                @input="(value: string) => handlePasswordUpdate(row, value)"
+                :type="showPasswordMap[row.id] ? 'text' : 'password'"
+                size="small"
+                placeholder="● ● ● ● ● ●"
+              >
+                <template #suffix>
+                  <el-button
+                    :icon="showPasswordMap[row.id] ? Hide : View"
+                    link
+                    size="small"
+                    @click="togglePasswordVisibility(row.id)"
+                    style="padding: 0 4px"
+                  />
+                </template>
+              </el-input>
+              <el-input
+                v-else
+                model-value="—"
+                readonly
+                disabled
+                size="small"
+              />
+            </div>
+            <el-button
+              :icon="Delete"
+              type="danger"
+              link
               size="small"
-              placeholder="● ● ● ● ● ●"
-            >
-              <template #suffix>
-                <el-button
-                  :icon="showPasswordMap[row.id] ? Hide : View"
-                  link
-                  size="small"
-                  @click="togglePasswordVisibility(row.id)"
-                  style="padding: 0 4px"
-                />
-              </template>
-            </el-input>
-            <el-input
-              v-else
-              model-value="—"
-              readonly
-              disabled
-              size="small"
+              @click="handleDelete(row)"
+              title="Удалить запись"
+              class="delete-button"
             />
           </div>
         </template>
       </el-table-column>
 
-      <el-table-column label="Действия" width="80" fixed="right">
-        <template #default="{ row }">
-          <el-button
-            :icon="Delete"
-            type="danger"
-            link
-            size="small"
-            @click="handleDelete(row)"
-            title="Удалить запись"
-          />
-        </template>
-      </el-table-column>
+
     </el-table>
   </div>
 </template>
@@ -195,6 +195,27 @@ const handlePasswordUpdate = (account: Account, value: string): void => {
 
 .password-field {
   width: 100%;
+}
+
+.password-field-with-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.password-input-wrapper {
+  flex: 1;
+}
+
+.delete-button {
+  flex-shrink: 0;
+  color: var(--el-color-danger);
+}
+
+.delete-button:hover {
+  color: var(--el-color-danger-light-3);
+  background-color: var(--el-color-danger-light-9);
 }
 
 :deep(.el-table) {
