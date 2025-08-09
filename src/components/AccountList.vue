@@ -10,6 +10,7 @@ interface Props {
 
 interface Emits {
   (e: 'delete', id: string): void;
+  (e: 'update', account: Account): void;
 }
 
 const props = defineProps<Props>();
@@ -42,27 +43,35 @@ const togglePasswordVisibility = (accountId: string): void => {
   showPasswordMap.value[accountId] = !showPasswordMap.value[accountId];
 };
 
-const formatTags = (tags: string): string => {
-  return tags || '—';
-};
 
-const formatPassword = (account: Account): string => {
-  if (account.type === AccountType.LDAP) {
-    return '—';
+
+const handleFieldUpdate = (account: Account, field: keyof Account, value: any): void => {
+  const updatedAccount = { ...account, [field]: value };
+  
+  // Если изменился тип на LDAP, обнуляем пароль
+  if (field === 'type' && value === AccountType.LDAP) {
+    updatedAccount.password = null;
   }
   
-  if (!account.password) {
-    return '—';
-  }
-  
-  return showPasswordMap.value[account.id] ? account.password : '● ● ● ● ● ●';
+  emit('update', updatedAccount);
 };
 
-const getPasswordInputType = (account: Account): string => {
-  if (account.type === AccountType.LDAP) {
-    return 'text';
-  }
-  return showPasswordMap.value[account.id] ? 'text' : 'password';
+const handleTagsUpdate = (account: Account, value: string): void => {
+  // Ограничение на 50 символов
+  const limitedValue = value.length > 50 ? value.slice(0, 50) : value;
+  handleFieldUpdate(account, 'tags', limitedValue);
+};
+
+const handleTypeUpdate = (account: Account, value: AccountType): void => {
+  handleFieldUpdate(account, 'type', value);
+};
+
+const handleLoginUpdate = (account: Account, value: string): void => {
+  handleFieldUpdate(account, 'login', value);
+};
+
+const handlePasswordUpdate = (account: Account, value: string): void => {
+  handleFieldUpdate(account, 'password', value);
 };
 </script>
 
@@ -90,9 +99,12 @@ const getPasswordInputType = (account: Account): string => {
       <el-table-column label="Метки" min-width="150">
         <template #default="{ row }">
           <el-input
-            :model-value="formatTags(row.tags)"
-            readonly
+            :model-value="row.tags"
+            @input="(value: string) => handleTagsUpdate(row, value)"
             size="small"
+            maxlength="50"
+            show-word-limit
+            placeholder="Введите метки через ;"
           />
         </template>
       </el-table-column>
@@ -101,7 +113,7 @@ const getPasswordInputType = (account: Account): string => {
         <template #default="{ row }">
           <el-select
             :model-value="row.type"
-            disabled
+            @change="(value: AccountType) => handleTypeUpdate(row, value)"
             size="small"
             style="width: 100%"
           >
@@ -115,7 +127,7 @@ const getPasswordInputType = (account: Account): string => {
         <template #default="{ row }">
           <el-input
             :model-value="row.login"
-            readonly
+            @input="(value: string) => handleLoginUpdate(row, value)"
             size="small"
             placeholder="Значение"
           />
@@ -126,16 +138,14 @@ const getPasswordInputType = (account: Account): string => {
         <template #default="{ row }">
           <div class="password-field">
             <el-input
-              :model-value="formatPassword(row)"
-              :type="getPasswordInputType(row)"
-              readonly
+              v-if="row.type === AccountType.LOCAL"
+              :model-value="row.password || ''"
+              @input="(value: string) => handlePasswordUpdate(row, value)"
+              :type="showPasswordMap[row.id] ? 'text' : 'password'"
               size="small"
-              :disabled="row.type === AccountType.LDAP"
+              placeholder="● ● ● ● ● ●"
             >
-              <template 
-                v-if="row.type === AccountType.LOCAL && row.password"
-                #suffix
-              >
+              <template #suffix>
                 <el-button
                   :icon="showPasswordMap[row.id] ? Hide : View"
                   link
@@ -145,6 +155,13 @@ const getPasswordInputType = (account: Account): string => {
                 />
               </template>
             </el-input>
+            <el-input
+              v-else
+              model-value="—"
+              readonly
+              disabled
+              size="small"
+            />
           </div>
         </template>
       </el-table-column>

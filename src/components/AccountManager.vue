@@ -3,17 +3,40 @@ import { ref } from 'vue';
 import { ElButton, ElCard } from 'element-plus';
 import 'element-plus/dist/index.css';
 import { Plus } from '@element-plus/icons-vue';
-import { type Account } from '../types/account';
+import { AccountType, type Account } from '../types/account';
 import AccountList from './AccountList.vue';
 
 const accounts = ref<Account[]>([
 
 ]);
 
+const generateId = (): string => {
+  return Date.now().toString(36) + Math.random().toString(36).substr(2);
+};
+
+const handleAddAccount = (): void => {
+  const newAccount: Account = {
+    id: generateId(),
+    tags: '',
+    type: AccountType.LOCAL,
+    login: '',
+    password: ''
+  };
+  
+  accounts.value.push(newAccount);
+};
+
 const handleDeleteAccount = (id: string): void => {
   const index = accounts.value.findIndex(acc => acc.id === id);
   if (index !== -1) {
     accounts.value.splice(index, 1);
+  }
+};
+
+const handleUpdateAccount = (updatedAccount: Account): void => {
+  const index = accounts.value.findIndex(acc => acc.id === updatedAccount.id);
+  if (index !== -1) {
+    accounts.value[index] = updatedAccount;
   }
 };
 
@@ -27,7 +50,8 @@ const handleDeleteAccount = (id: string): void => {
         <el-button
           type="primary"
           :icon="Plus"
-          size="default">
+          size="default"
+          @click="handleAddAccount">
           Добавить
         </el-button>
       </div>
@@ -42,6 +66,7 @@ const handleDeleteAccount = (id: string): void => {
       <AccountList
         :accounts="accounts"
         @delete="handleDeleteAccount"
+        @update="handleUpdateAccount"
       />
     </el-card>
   </div>
