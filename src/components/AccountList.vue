@@ -29,7 +29,7 @@ const validateAccount = (account: Account): boolean => {
     errors.login = true;
   }
   
-  // Пароль обязателен только для локальных записей
+  // Пароль обязателен только для записей "Локальная"
   if (account.type === AccountType.LOCAL && (!account.password || account.password.trim() === '')) {
     errors.password = true;
   }
@@ -75,7 +75,7 @@ const togglePasswordVisibility = (accountId: string): void => {
 const handleTagInput = (account: Account): void => {
   const inputValue = tagInputs.value[account.id]?.trim();
   
-  // Разбиваем введенный текст по ; и создаем новый массив меток
+  // Разбиваем введенный текст по ' ; ' и создаем новый массив меток
   // Даже если поле пустое, создаем пустой массив
   const newTags = inputValue && inputValue.length > 0
     ? inputValue
@@ -104,7 +104,7 @@ const handleTagInput = (account: Account): void => {
     ElMessage.success('Метки сохранены');
   }
   
-  // Добавляем ; в конец для удобства ввода следующей метки (если нужно)
+  // Добавляем ; в конец для удобства ввода следующей метки
   // Но только если поле не пустое
   if (inputValue && inputValue.length > 0 && !inputValue.endsWith(';')) {
     tagInputs.value[account.id] = inputValue + ';';
@@ -239,7 +239,7 @@ const handleSpanMethod = ({ row, columnIndex }: any) => {
     return [1, 2]; // Растягиваем на 2 колонки
   }
   
-  return [1, 1]; // Обычная ячейка
+  return [1, 1];
 };
 </script>
 
