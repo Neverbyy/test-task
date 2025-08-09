@@ -72,31 +72,6 @@ const togglePasswordVisibility = (accountId: string): void => {
   showPasswordMap.value[accountId] = !showPasswordMap.value[accountId];
 };
 
-
-
-const handleFieldUpdate = (account: Account, field: keyof Account, value: any): void => {
-  const updatedAccount = { ...account, [field]: value };
-  
-  // Если изменился тип на LDAP, обнуляем пароль
-  if (field === 'type' && value === AccountType.LDAP) {
-    updatedAccount.password = null;
-  }
-  
-  // Обновляем локальное состояние
-  const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
-  if (index !== -1) {
-    accountStore.accounts[index] = updatedAccount;
-  }
-};
-
-
-
-
-
-
-
-
-
 const handleTagInput = (account: Account): void => {
   const inputValue = tagInputs.value[account.id]?.trim();
   
