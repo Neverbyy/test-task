@@ -5,14 +5,10 @@ import { Delete, View, Hide } from '@element-plus/icons-vue';
 import { AccountType, type Account } from '../types/account';
 import { useAccountStore } from '../stores/accountStore';
 
-
-
 const accountStore = useAccountStore();
 const showPasswordMap = ref<Record<string, boolean>>({});
 const validationErrors = ref<Record<string, { login?: boolean; password?: boolean }>>({});
 const tagInputs = ref<Record<string, string>>({});
-
-
 
 
 
