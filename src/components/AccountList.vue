@@ -156,7 +156,7 @@ onMounted(() => {
     accountStore.accounts.forEach(account => {
       // Инициализируем поле ввода для всех записей, даже с пустыми метками
       tagInputs.value[account.id] = account.tags.length > 0 
-        ? getTagsDisplayValue(account.tags) 
+        ? getTagsDisplayValue(account.tags) + ';' 
         : '';
     });
   }
@@ -168,7 +168,7 @@ watch(() => accountStore.accounts, (newAccounts) => {
     if (!(account.id in tagInputs.value)) {
       // Новая запись - инициализируем поле ввода
       tagInputs.value[account.id] = account.tags.length > 0 
-        ? getTagsDisplayValue(account.tags) 
+        ? getTagsDisplayValue(account.tags) + ';' 
         : '';
     }
   });
