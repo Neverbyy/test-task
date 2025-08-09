@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, onMounted, watch } from 'vue';
 import { ElTable, ElTableColumn, ElInput, ElSelect, ElOption, ElButton, ElMessageBox, ElMessage } from 'element-plus';
 import { Delete, View, Hide } from '@element-plus/icons-vue';
 import { AccountType, type Account } from '../types/account';
@@ -14,9 +14,7 @@ const tagInputs = ref<Record<string, string>>({});
 
 
 
-const hasLocalAccounts = computed(() => {
-  return accountStore.hasLocalAccounts;
-});
+
 
 // Функция для преобразования массива меток в строку для отображения
 const getTagsDisplayValue = (tags: Array<{ text: string }>): string => {
@@ -93,75 +91,11 @@ const handleFieldUpdate = (account: Account, field: keyof Account, value: any): 
 
 
 
-const handleTagsBlur = (account: Account): void => {
-  // Проверяем, есть ли изменения в метках
-  const currentInputValue = tagInputs.value[account.id]?.trim();
-  
-  // Разбиваем введенный текст по ; и создаем новый массив меток
-  // Даже если поле пустое, создаем пустой массив
-  const newTags = currentInputValue && currentInputValue.length > 0
-    ? currentInputValue
-        .split(';')
-        .map(tag => tag.trim())
-        .filter(tag => tag.length > 0)
-        .map(tag => ({ text: tag }))
-    : [];
-  
-  // Проверяем, изменились ли метки
-  const hasChanges = JSON.stringify(account.tags) !== JSON.stringify(newTags);
-  
-  if (hasChanges) {
-    // Заменяем весь массив меток новым
-    const updatedAccount = { ...account };
-    updatedAccount.tags = newTags;
-    
-    // Обновляем локальное состояние
-    const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
-    if (index !== -1) {
-      accountStore.accounts[index] = updatedAccount;
-    }
-    
-    // Сохраняем в store
-    accountStore.updateAccount(updatedAccount);
-    ElMessage.success('Метки сохранены');
-  }
-};
 
-const addTag = (account: Account): void => {
-  const newTagText = tagInputs.value[account.id]?.trim();
-  if (newTagText && newTagText.length > 0) {
-    const updatedAccount = { ...account };
-    updatedAccount.tags.push({ text: newTagText });
-    
-    // Обновляем локальное состояние
-    const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
-    if (index !== -1) {
-      accountStore.accounts[index] = updatedAccount;
-    }
-    
-    // НЕ очищаем поле ввода - метки остаются для редактирования
-    // tagInputs.value[account.id] = '';
-    
-    // Сохраняем в store
-    accountStore.updateAccount(updatedAccount);
-    ElMessage.success('Метка добавлена');
-  }
-};
 
-const removeTag = (account: Account, tagIndex: number): void => {
-  const updatedAccount = { ...account };
-  updatedAccount.tags.splice(tagIndex, 1);
-  
-  // Обновляем локальное состояние
-  const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
-  if (index !== -1) {
-    accountStore.accounts[index] = updatedAccount;
-  }
-  
-  // Сохраняем в store
-  accountStore.updateAccount(updatedAccount);
-  ElMessage.success('Метка удалена');
-};
+
+
+
 
 const handleTagInput = (account: Account): void => {
   const inputValue = tagInputs.value[account.id]?.trim();
@@ -295,7 +229,7 @@ const handleTypeChange = (account: Account, value: AccountType): void => {
   }
 };
 
-const handleSpanMethod = ({ row, column, rowIndex, columnIndex }: any) => {
+const handleSpanMethod = ({ row, columnIndex }: any) => {
   // Если это LDAP запись и колонка "Пароль" (индекс 3)
   if (row.type === AccountType.LDAP && columnIndex === 3) {
     return [0, 0]; // Скрываем ячейку
@@ -432,13 +366,7 @@ const handleSpanMethod = ({ row, column, rowIndex, columnIndex }: any) => {
   overflow: hidden;
 }
 
-.help-alert {
-  margin-bottom: 16px;
-}
 
-.password-field {
-  width: 100%;
-}
 
 .password-field-with-actions {
   display: flex;
@@ -482,22 +410,7 @@ const handleSpanMethod = ({ row, column, rowIndex, columnIndex }: any) => {
   width: calc(100% + 180px); /* Ширина колонки логина + ширина колонки пароля */
 }
 
-.password-field-ldap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
 
-.ldap-password-text {
-  flex: 1;
-  color: var(--el-text-color-placeholder);
-  font-style: italic;
-  padding: 8px 12px;
-  background-color: var(--el-fill-color-light);
-  border-radius: 4px;
-  border: 1px solid var(--el-border-color-lighter);
-}
 
 .tags-input-container {
   display: flex;
