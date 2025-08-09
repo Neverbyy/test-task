@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { onMounted } from 'vue';
 import { ElButton, ElCard } from 'element-plus';
 import 'element-plus/dist/index.css';
 import { Plus } from '@element-plus/icons-vue';
@@ -18,6 +19,11 @@ const handleAddAccount = (): void => {
   
   accountStore.addAccount(newAccount);
 };
+
+// Инициализация store при монтировании компонента
+onMounted(() => {
+  accountStore.initializeStore();
+});
 
 
 

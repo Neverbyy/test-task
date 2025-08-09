@@ -82,7 +82,7 @@ const handleFieldUpdate = (account: Account, field: keyof Account, value: any): 
     updatedAccount.password = null;
   }
   
-  // Обновляем локальное состояние без сохранения в store
+  // Обновляем локальное состояние
   const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
   if (index !== -1) {
     accountStore.accounts[index] = updatedAccount;
@@ -151,12 +151,15 @@ const handleTagInputChange = (account: Account, value: string): void => {
 
 // Инициализируем поля ввода меток при загрузке компонента
 onMounted(() => {
-  accountStore.accounts.forEach(account => {
-    // Инициализируем поле ввода для всех записей, даже с пустыми метками
-    tagInputs.value[account.id] = account.tags.length > 0 
-      ? getTagsDisplayValue(account.tags) 
-      : '';
-  });
+  // Ждем, пока store будет инициализирован
+  if (accountStore.accounts.length > 0) {
+    accountStore.accounts.forEach(account => {
+      // Инициализируем поле ввода для всех записей, даже с пустыми метками
+      tagInputs.value[account.id] = account.tags.length > 0 
+        ? getTagsDisplayValue(account.tags) 
+        : '';
+    });
+  }
 });
 
 // Отслеживаем новые записи и инициализируем для них поля ввода
@@ -174,59 +177,80 @@ watch(() => accountStore.accounts, (newAccounts) => {
 
 
 const handleLoginUpdate = (account: Account, value: string): void => {
-  handleFieldUpdate(account, 'login', value);
+  const updatedAccount = { ...account, login: value };
+  
+  // Обновляем локальное состояние
+  const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
+  if (index !== -1) {
+    accountStore.accounts[index] = updatedAccount;
+  }
+  
+  // Сразу сохраняем в store
+  accountStore.updateAccount(updatedAccount);
 };
 
 const handlePasswordUpdate = (account: Account, value: string): void => {
-  handleFieldUpdate(account, 'password', value);
+  const updatedAccount = { ...account, password: value };
+  
+  // Обновляем локальное состояние
+  const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
+  if (index !== -1) {
+    accountStore.accounts[index] = updatedAccount;
+  }
+  
+  // Сразу сохраняем в store
+  accountStore.updateAccount(updatedAccount);
 };
 
 const handleLoginBlur = (account: Account): void => {
-  const isValid = validateAccount(account);
+  // Получаем актуальные данные из store
+  const currentAccount = accountStore.accounts.find(acc => acc.id === account.id);
+  if (!currentAccount) return;
+  
+  const isValid = validateAccount(currentAccount);
   if (isValid) {
     clearValidationErrors(account.id);
-    
-    // Проверяем, изменился ли логин
-    const originalAccount = accountStore.accounts.find(acc => acc.id === account.id);
-    if (originalAccount && originalAccount.login !== account.login) {
-      // Сохраняем в store только при успешной валидации и изменении
-      accountStore.updateAccount(account);
-      ElMessage.success('Запись сохранена');
-    }
+    ElMessage.success('Данные сохранены');
   }
 };
 
 const handlePasswordBlur = (account: Account): void => {
-  const isValid = validateAccount(account);
+  // Получаем актуальные данные из store
+  const currentAccount = accountStore.accounts.find(acc => acc.id === account.id);
+  if (!currentAccount) return;
+  
+  const isValid = validateAccount(currentAccount);
   if (isValid) {
     clearValidationErrors(account.id);
-    
-    // Проверяем, изменился ли пароль
-    const originalAccount = accountStore.accounts.find(acc => acc.id === account.id);
-    if (originalAccount && originalAccount.password !== account.password) {
-      // Сохраняем в store только при успешной валидации и изменении
-      accountStore.updateAccount(account);
-      ElMessage.success('Запись сохранена');
-    }
+    ElMessage.success('Данные сохранены');
   }
 };
 
 const handleTypeChange = (account: Account, value: AccountType): void => {
-  handleFieldUpdate(account, 'type', value);
+  const updatedAccount = { ...account, type: value };
+  
+  // Если изменился тип на LDAP, обнуляем пароль
+  if (value === AccountType.LDAP) {
+    updatedAccount.password = null;
+  }
+  
+  // Обновляем локальное состояние
+  const index = accountStore.accounts.findIndex(acc => acc.id === account.id);
+  if (index !== -1) {
+    accountStore.accounts[index] = updatedAccount;
+  }
+  
+  // Сразу сохраняем в store
+  accountStore.updateAccount(updatedAccount);
   
   // Валидация после изменения типа
-  const isValid = validateAccount(account);
+  const isValid = validateAccount(updatedAccount);
   if (isValid) {
     clearValidationErrors(account.id);
-    
-    // Проверяем, изменился ли тип
-    const originalAccount = accountStore.accounts.find(acc => acc.id === account.id);
-    if (originalAccount && originalAccount.type !== account.type) {
-      // Сохраняем в store только при успешной валидации и изменении
-      accountStore.updateAccount(account);
-      ElMessage.success('Запись сохранена');
-    }
   }
+  
+  // Показываем оповещение при изменении типа записи
+  ElMessage.success('Тип записи изменён');
 };
 
 const handleSpanMethod = ({ row, columnIndex }: any) => {
