@@ -30,7 +30,7 @@ export const useAccountStore = defineStore('accounts', () => {
       ...account
     };
     
-    // Убеждаемся, что tags всегда является массивом
+    // tags всегда является массивом
     if (!Array.isArray(newAccount.tags)) {
       newAccount.tags = [];
     }
@@ -60,7 +60,7 @@ export const useAccountStore = defineStore('accounts', () => {
     saveToLocalStorage();
   };
 
-  // LocalStorage operations
+  // LocalStorage
   const saveToLocalStorage = (): void => {
     try {
       localStorage.setItem('accounts', JSON.stringify(accounts.value));
@@ -77,10 +77,8 @@ export const useAccountStore = defineStore('accounts', () => {
         const parsedAccounts = JSON.parse(stored);
         console.log('Загружены данные из localStorage:', parsedAccounts);
         
-        // Миграция: преобразуем старые строковые метки в новый формат
         accounts.value = parsedAccounts.map((account: any) => {
           if (typeof account.tags === 'string') {
-            // Старый формат - преобразуем в новый
             const tagsArray = account.tags
               .split(';')
               .map((tag: string) => tag.trim())
@@ -101,7 +99,7 @@ export const useAccountStore = defineStore('accounts', () => {
     }
   };
 
-  // Initialize store
+  // Init store
   const initializeStore = (): void => {
     loadFromLocalStorage();
   };
