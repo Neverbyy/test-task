@@ -52,7 +52,7 @@ const hasFieldError = (accountId: string, field: 'login' | 'password'): boolean 
 const handleDelete = async (account: Account): Promise<void> => {
   try {
     await ElMessageBox.confirm(
-      `Вы уверены что хотите удалить запись "${account.login}"?`,
+      `Вы уверены что хотите удалить эту запись?`,
       'Подтверждение удаления',
       {
         confirmButtonText: 'Удалить',
@@ -255,10 +255,10 @@ const handleSpanMethod = ({ row, columnIndex }: any) => {
       <el-table-column label="Метки" min-width="200">
         <template #default="{ row }">
           <div class="tags-input-container">
-                        <el-input
+            <el-input
               v-model="tagInputs[row.id]"
               size="small"
-              placeholder="Введите метки через ; (только буквы и цифры)"
+              placeholder="Введите метки"
               @keyup.enter="handleTagInput(row)"
               @blur="() => handleTagInput(row)"
               @input="(value: string) => handleTagInputChange(row, value)"
@@ -332,7 +332,7 @@ const handleSpanMethod = ({ row, columnIndex }: any) => {
                   <el-button
                     :icon="showPasswordMap[row.id] ? Hide : View"
                     link
-                    size="small"
+                    size="large"
                     @click="togglePasswordVisibility(row.id)"
                     style="padding: 0 4px"
                   />
@@ -343,7 +343,7 @@ const handleSpanMethod = ({ row, columnIndex }: any) => {
               :icon="Delete"
               type="danger"
               link
-              size="small"
+              :style="{ fontSize: '18px' }"
               @click="handleDelete(row)"
               title="Удалить запись"
               class="delete-button"
@@ -364,8 +364,6 @@ const handleSpanMethod = ({ row, columnIndex }: any) => {
   border-radius: 8px;
   overflow: hidden;
 }
-
-
 
 .password-field-with-actions {
   display: flex;
@@ -409,17 +407,12 @@ const handleSpanMethod = ({ row, columnIndex }: any) => {
   width: calc(100% + 180px); /* Ширина колонки логина + ширина колонки пароля */
 }
 
-
-
 .tags-input-container {
   display: flex;
   flex-direction: column;
   gap: 4px;
   width: 100%;
 }
-
-
-
 
 
 :deep(.el-table) {
@@ -448,4 +441,26 @@ const handleSpanMethod = ({ row, columnIndex }: any) => {
   border-color: var(--el-color-danger) !important;
   box-shadow: 0 0 0 1px var(--el-color-danger) inset !important;
 }
+
+/* Альтернативный селектор для заголовков */
+:deep(.el-table th.el-table__cell) {
+  font-size: 20px !important;
+  font-weight: 600 !important;
+}
+
+/* Увеличиваем размер шрифта у инпутов */
+:deep(.el-table .el-input__inner) {
+  font-size: 14px !important;
+}
+
+/* Увеличиваем размер всех кнопок в таблице */
+:deep(.el-table .el-button) {
+  font-size: 18px !important;
+}
+
+/* Увеличиваем размер иконок в кнопках */
+:deep(.el-table .el-button .el-icon) {
+  font-size: 18px !important;
+}
+
 </style>

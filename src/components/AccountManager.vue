@@ -39,7 +39,7 @@ onMounted(() => {
           :icon="Plus"
           size="default"
           @click="handleAddAccount"
-          circle
+          :style="{width: '35px', height: '35px'}"
           title="Добавить учетную запись">
         </el-button>
       </div>
@@ -83,7 +83,7 @@ onMounted(() => {
 .header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 15px;
 }
 
 .title {
@@ -102,10 +102,12 @@ onMounted(() => {
 .list-header {
   font-weight: 600;
   color: var(--el-text-color-primary);
+  font-size: 24px;
 }
 
 :deep(.el-card__body) {
   padding: 20px;
+  font-size: 30px;
 }
 
 :deep(.el-card__header) {
